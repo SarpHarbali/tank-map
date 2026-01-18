@@ -1,6 +1,7 @@
 "use client";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
+import Link from "next/link";
 
 // Fix default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -25,13 +26,25 @@ export default function TankMap({ tanks }: { tanks: any[] }) {
         <Marker key={t.tank_id} position={[t.lat, t.lon]}>
           <Popup>
             <div style={{ minWidth: 240 }}>
-              <b>{t.tank_number}</b>
+              <Link 
+                href={`/tanks/${t.tank_id}`}
+                style={{ 
+                  color: '#2563eb',
+                  fontWeight: 'bold',
+                  textDecoration: 'none',
+                  fontSize: '16px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+              >
+                {t.tank_number} →
+              </Link>
               <br />
               Place: {t.canonical_place}
               <br />
               Last: {t.event_type} ({t.event_time ?? "n/a"})
               <br />
-              <hr />
+              <hr style={{ margin: '8px 0' }} />
               {t.pol} → {t.pod}
               <br />
               Renter: {t.renter_company ?? "n/a"}
