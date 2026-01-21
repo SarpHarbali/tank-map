@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, MapPin, Package, Calendar, Map } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin, Package, Calendar, Map, Search } from 'lucide-react';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('tanks');
@@ -508,85 +508,166 @@ export default function AdminPanel() {
     </div>
   );
 
-  const renderLocationForm = () => (
-    <div className="space-y-4 bg-white p-6 rounded-lg shadow-md">
-      <h3 className="text-xl font-bold mb-4">{editingItem ? 'Edit Location' : 'Add New Location'}</h3>
-      
-      <div>
-        <label className="block text-sm font-medium mb-1">Canonical Name</label>
-        <input
-          type="text"
-          value={formData.canonical_name || ''}
-          onChange={e => setFormData({...formData, canonical_name: e.target.value})}
-          className="w-full px-3 py-2 border rounded-md"
-          placeholder="Rotterdam Port"
-        />
-      </div>
+  // ... inside AdminPanel function
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Kind</label>
-          <select
-            value={formData.kind || ''}
-            onChange={e => setFormData({...formData, kind: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          >
-            <option value="">Select Kind</option>
-            <option value="port">Port</option>
-            <option value="depot">Depot</option>
-            <option value="warehouse">Warehouse</option>
-          </select>
-        </div>
+  const fetchCoordinates = async () => {
+    const queryName = formData.canonical_name;
+    const queryCountry = formData.country_code;
 
+    if (!queryName) {
+      alert("Please enter a Canonical Name first (e.g., 'Rotterdam Port').");
+      return;
+    }
+
+    // specific query prioritizes the name + country for better accuracy
+    const query = `${queryName}${queryCountry ? ',' + queryCountry : ''}`;
+    
+    try {
+      // Use OpenStreetMap's free Nominatim API
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+
+      if (data && data.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          lat: parseFloat(data[0].lat),
+          lon: parseFloat(data[0].lon)
+        }));
+      } else {
+        alert("Location not found. Try checking the spelling or adding a Country Code.");
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      alert("Failed to fetch coordinates. Please enter them manually.");
+    }
+  };
+
+  const renderLocationForm = () => {
+    // Helper to generate a small map preview URL
+    const getMapPreviewUrl = (lat, lon) => {
+      const delta = 0.5; // Zoom level (smaller = zoomed in)
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${lon - delta},${lat - delta},${lon + delta},${lat + delta}&layer=mapnik&marker=${lat},${lon}`;
+    };
+
+    return (
+      <div className="space-y-4 bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold mb-4">{editingItem ? 'Edit Location' : 'Add New Location'}</h3>
+        
         <div>
-          <label className="block text-sm font-medium mb-1">Country Code</label>
+          <label className="block text-sm font-medium mb-1"> Name</label>
           <input
             type="text"
-            maxLength="2"
-            value={formData.country_code || ''}
-            onChange={e => setFormData({...formData, country_code: e.target.value.toUpperCase()})}
+            value={formData.canonical_name || ''}
+            onChange={e => setFormData({...formData, canonical_name: e.target.value})}
             className="w-full px-3 py-2 border rounded-md"
-            placeholder="NL"
+            placeholder="Rotterdam Port"
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Latitude</label>
-          <input
-            type="number"
-            step="0.000001"
-            value={formData.lat || ''}
-            onChange={e => setFormData({...formData, lat: parseFloat(e.target.value)})}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="51.9225"
-          />
+  
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Kind</label>
+            <select
+              value={formData.kind || ''}
+              onChange={e => setFormData({...formData, kind: e.target.value})}
+              className="w-full px-3 py-2 border rounded-md"
+            >
+              <option value="">Select Kind</option>
+              <option value="port">Port</option>
+              <option value="depot">Depot</option>
+              <option value="warehouse">Warehouse</option>
+            </select>
+          </div>
+  
+          <div>
+            <label className="block text-sm font-medium mb-1">Country Code</label>
+            <input
+              type="text"
+              maxLength="2"
+              value={formData.country_code || ''}
+              onChange={e => setFormData({...formData, country_code: e.target.value.toUpperCase()})}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="NL"
+            />
+          </div>
+        </div>
+  
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={fetchCoordinates}
+            className="text-sm flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
+          >
+            <Search className="w-3 h-3" />
+            Auto-fill Coordinates from Name
+          </button>
+        </div>
+  
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Latitude</label>
+            <input
+              type="number"
+              step="0.000001"
+              value={formData.lat || ''}
+              onChange={e => setFormData({...formData, lat: parseFloat(e.target.value)})}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="51.9225"
+            />
+          </div>
+  
+          <div>
+            <label className="block text-sm font-medium mb-1">Longitude</label>
+            <input
+              type="number"
+              step="0.000001"
+              value={formData.lon || ''}
+              onChange={e => setFormData({...formData, lon: parseFloat(e.target.value)})}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="4.4792"
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Longitude</label>
-          <input
-            type="number"
-            step="0.000001"
-            value={formData.lon || ''}
-            onChange={e => setFormData({...formData, lon: parseFloat(e.target.value)})}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="4.4792"
-          />
+        {/* Map Preview Snippet */}
+        {formData.lat && formData.lon && (
+          <div className="mt-4 border rounded-md overflow-hidden shadow-sm">
+            <div className="bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-500 border-b">
+              Location Preview
+            </div>
+            <iframe
+              width="100%"
+              height="200"
+              frameBorder="0"
+              scrolling="no"
+              marginHeight="0"
+              marginWidth="0"
+              src={getMapPreviewUrl(formData.lat, formData.lon)}
+              className="block"
+            ></iframe>
+            <div className="bg-gray-50 px-3 py-1 text-xs text-gray-500 text-right">
+              <a 
+                href={`https://www.openstreetmap.org/?mlat=${formData.lat}&mlon=${formData.lon}#map=15/${formData.lat}/${formData.lon}`} 
+                target="_blank" 
+                className="hover:underline text-blue-600"
+              >
+                View Larger Map
+              </a>
+            </div>
+          </div>
+        )}
+  
+        <div className="flex gap-2 mt-4">
+          <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            {editingItem ? 'Update' : 'Create'} Location
+          </button>
+          <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">
+            Cancel
+          </button>
         </div>
       </div>
-
-      <div className="flex gap-2">
-        <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-          {editingItem ? 'Update' : 'Create'} Location
-        </button>
-        <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderList = () => {
     let data, columns;
