@@ -16,10 +16,25 @@ const TankMap = dynamic(() => import("@/components/TankMap"), {
 export default function Home() {
   const [tanks, setTanks] = useState([]);
 
+  // app/page.tsx
+
   useEffect(() => {
     fetch("/api/map/tanks")
       .then((r) => r.json())
-      .then(setTanks);
+      .then((data) => {
+        // FIX: Check if data is an array before setting it
+        if (Array.isArray(data)) {
+          setTanks(data);
+        } else {
+          console.error("API Error - expected array but got:", data);
+          // If there's an error, keep tanks as empty array to prevent crash
+          setTanks([]); 
+        }
+      })
+      .catch((err) => {
+        console.error("Network error:", err);
+        setTanks([]);
+      });
   }, []);
 
   return (
