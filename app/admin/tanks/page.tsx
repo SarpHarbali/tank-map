@@ -69,7 +69,7 @@ export default function AdminPanel() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this item?')) return;
     
     try {
@@ -80,8 +80,8 @@ export default function AdminPanel() {
     }
   };
 
-  const handleEdit = (item) => {
-    // Determine the correct ID based on the active tab
+  // Update this function too to prevent the next build error
+  const handleEdit = (item: any) => {
     let id;
     if (activeTab === 'tanks') id = item.tank_id;
     else if (activeTab === 'jobs') id = item.shipment_id;
