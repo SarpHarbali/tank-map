@@ -41,18 +41,16 @@ export default function AdminPanel() {
     const endpoint = `/api/admin/${activeTab}`;
     const method = editingItem ? 'PUT' : 'POST';
     
-    // Create a copy of formData where empty strings are converted to null
+    // FIX: added 'as Record<string, any>' to satisfy TypeScript
     const cleanedData = Object.entries(formData).reduce((acc, [key, value]) => {
-      // Convert empty strings to null for database compatibility
       acc[key] = value === '' ? null : value;
       return acc;
-    }, {});
+    }, {} as Record<string, any>); // <--- This cast fixes the build error
 
     try {
       const response = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        // Use cleanedData instead of formData
         body: JSON.stringify(editingItem ? { ...cleanedData, id: editingItem } : cleanedData)
       });
       
@@ -62,7 +60,6 @@ export default function AdminPanel() {
         setEditingItem(null);
         setFormData({});
       } else {
-        // Log the actual error message from the server for debugging
         const errorData = await response.json();
         console.error('Server error:', errorData);
         alert(`Error: ${errorData.error || 'Failed to save'}`);
@@ -317,6 +314,132 @@ export default function AdminPanel() {
       </div>
     );
   };
+
+  const renderEventForm = () => (
+    <div className="space-y-4 bg-white p-6 rounded-lg shadow-md">
+      <h3 className="text-xl font-bold mb-4">{editingItem ? 'Edit Event' : 'Add New Event'}</h3>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Tank</label>
+          <select
+            value={formData.tank_id || ''}
+            onChange={e => setFormData({...formData, tank_id: e.target.value})}
+            className="w-full px-3 py-2 border rounded-md"
+          >
+            <option value="">Select Tank</option>
+            {tanks.map(tank => (
+              <option key={tank.tank_id} value={tank.tank_id}>{tank.tank_number}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Job</label>
+          <select
+            value={formData.job_id || ''}
+            onChange={e => setFormData({...formData, job_id: e.target.value})}
+            className="w-full px-3 py-2 border rounded-md"
+          >
+            <option value="">Select Job (Optional)</option>
+            {jobs.map(job => (
+              <option key={job.job_id} value={job.job_id}>
+                {job.pol} → {job.pod} ({job.vessel})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Event Type</label>
+          <select
+            value={formData.event_type || ''}
+            onChange={e => setFormData({...formData, event_type: e.target.value})}
+            className="w-full px-3 py-2 border rounded-md"
+          >
+            <option value="">Select Type</option>
+            {/* Updated options to match your database ENUM values */}
+            <option value="LOADING_DATE">Loading Date</option>
+            <option value="ETD">ETD (Est. Departure)</option>
+            <option value="ETA">ETA (Est. Arrival)</option>
+            <option value="ATA">ATA (Actual Arrival)</option>
+            <option value="GATE_OUT">Gate Out</option>
+            <option value="EMPTY_DATE">Empty Date</option>
+            <option value="STORAGE_DATE">Storage Date</option>
+            <option value="STATUS_UPDATE">Status Update</option>
+            <option value="NOTE">Note</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Event Time</label>
+          <input
+            type="datetime-local"
+            value={formData.event_time || ''}
+            onChange={e => setFormData({...formData, event_time: e.target.value})}
+            className="w-full px-3 py-2 border rounded-md"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Location Name</label>
+          <input
+            type="text"
+            value={formData.location || ''}
+            onChange={e => setFormData({...formData, location: e.target.value})}
+            className="w-full px-3 py-2 border rounded-md"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Location (from database)</label>
+          <select
+            value={formData.location_id || ''}
+            onChange={e => setFormData({...formData, location_id: e.target.value})}
+            className="w-full px-3 py-2 border rounded-md"
+          >
+            <option value="">Select Location (Optional)</option>
+            {locations.map(loc => (
+              <option key={loc.location_id} value={loc.location_id}>{loc.canonical_name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Status Text</label>
+        <input
+          type="text"
+          value={formData.status_text || ''}
+          onChange={e => setFormData({...formData, status_text: e.target.value})}
+          className="w-full px-3 py-2 border rounded-md"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Note</label>
+        <textarea
+          value={formData.note || ''}
+          onChange={e => setFormData({...formData, note: e.target.value})}
+          className="w-full px-3 py-2 border rounded-md"
+          rows="2"
+        />
+      </div>
+
+      <div className="flex gap-2">
+        <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          {editingItem ? 'Update' : 'Create'} Event
+        </button>
+        <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
 
   // ... inside AdminPanel function
 
