@@ -191,10 +191,12 @@ export default function AdminPanel() {
 
   const renderJobForm = () => {
     // Helper to toggle tank selection
-    const toggleTank = (tankId) => {
+    // FIX: Added ': string' to tankId
+    const toggleTank = (tankId: string) => {
       const current = formData.tank_ids || [];
       if (current.includes(tankId)) {
-        setFormData({ ...formData, tank_ids: current.filter(id => id !== tankId) });
+        // FIX: Added ': string' to id
+        setFormData({ ...formData, tank_ids: current.filter((id: string) => id !== tankId) });
       } else {
         setFormData({ ...formData, tank_ids: [...current, tankId] });
       }
@@ -205,9 +207,9 @@ export default function AdminPanel() {
       const selectedIds = formData.tank_ids || [];
       if (selectedIds.length === 0) return "Select Tanks...";
       
-      // Find the tank numbers for the selected IDs
-      const selectedTanks = tanks.filter(t => selectedIds.includes(t.tank_id));
-      const names = selectedTanks.map(t => t.tank_number);
+      // FIX: Added ': any' to 't' to avoid implicit any/never errors
+      const selectedTanks = tanks.filter((t: any) => selectedIds.includes(t.tank_id));
+      const names = selectedTanks.map((t: any) => t.tank_number);
       
       if (names.length <= 2) return names.join(", ");
       return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
@@ -237,7 +239,8 @@ export default function AdminPanel() {
           {isTankDropdownOpen && (
             <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
               {tanks.length > 0 ? (
-                tanks.map(tank => {
+                // FIX: Added ': any' to 'tank'
+                tanks.map((tank: any) => {
                   const isSelected = (formData.tank_ids || []).includes(tank.tank_id);
                   return (
                     <div
