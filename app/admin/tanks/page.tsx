@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, MapPin, Package, Calendar, Map, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin, Package, Calendar, Map, Search, ChevronDown, Check } from 'lucide-react';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('tanks');
@@ -12,6 +12,7 @@ export default function AdminPanel() {
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({});
+  const [isTankDropdownOpen, setIsTankDropdownOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -86,7 +87,7 @@ export default function AdminPanel() {
     // Determine the correct ID based on the active tab
     let id;
     if (activeTab === 'tanks') id = item.tank_id;
-    else if (activeTab === 'jobs') id = item.job_id;
+    else if (activeTab === 'jobs') id = item.shipment_id;
     else if (activeTab === 'events') id = item.event_id;
     else if (activeTab === 'locations') id = item.location_id;
 
@@ -191,322 +192,131 @@ export default function AdminPanel() {
     </div>
   );
 
-  const renderJobForm = () => (
-    <div className="space-y-4 bg-white p-6 rounded-lg shadow-md">
-      <h3 className="text-xl font-bold mb-4">{editingItem ? 'Edit Job' : 'Add New Job'}</h3>
+  const renderJobForm = () => {
+    // Helper to toggle tank selection
+    const toggleTank = (tankId) => {
+      const current = formData.tank_ids || [];
+      if (current.includes(tankId)) {
+        setFormData({ ...formData, tank_ids: current.filter(id => id !== tankId) });
+      } else {
+        setFormData({ ...formData, tank_ids: [...current, tankId] });
+      }
+    };
+
+    // Helper to get display text for the dropdown button
+    const getSelectedTanksText = () => {
+      const selectedIds = formData.tank_ids || [];
+      if (selectedIds.length === 0) return "Select Tanks...";
       
-      <div>
-        <label className="block text-sm font-medium mb-1">Tank</label>
-        <select
-          value={formData.tank_id || ''}
-          onChange={e => setFormData({...formData, tank_id: e.target.value})}
-          className="w-full px-3 py-2 border rounded-md"
-        >
-          <option value="">Select Tank</option>
-          {tanks.map(tank => (
-            <option key={tank.tank_id} value={tank.tank_id}>{tank.tank_number}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Port of Loading (POL)</label>
-          <input
-            type="text"
-            value={formData.pol || ''}
-            onChange={e => setFormData({...formData, pol: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Port of Discharge (POD)</label>
-          <input
-            type="text"
-            value={formData.pod || ''}
-            onChange={e => setFormData({...formData, pod: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">POL Location</label>
-          <select
-            value={formData.pol_location_id || ''}
-            onChange={e => setFormData({...formData, pol_location_id: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          >
-            <option value="">Select Location</option>
-            {locations.map(loc => (
-              <option key={loc.location_id} value={loc.location_id}>{loc.canonical_name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">POD Location</label>
-          <select
-            value={formData.pod_location_id || ''}
-            onChange={e => setFormData({...formData, pod_location_id: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          >
-            <option value="">Select Location</option>
-            {locations.map(loc => (
-              <option key={loc.location_id} value={loc.location_id}>{loc.canonical_name}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Loading Date</label>
-          <input
-            type="date"
-            value={formData.loading_date || ''}
-            onChange={e => setFormData({...formData, loading_date: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">ETD</label>
-          <input
-            type="date"
-            value={formData.etd || ''}
-            onChange={e => setFormData({...formData, etd: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">ETA</label>
-          <input
-            type="date"
-            value={formData.eta || ''}
-            onChange={e => setFormData({...formData, eta: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">ATA</label>
-          <input
-            type="date"
-            value={formData.ata || ''}
-            onChange={e => setFormData({...formData, ata: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Shipping Line</label>
-          <input
-            type="text"
-            value={formData.line || ''}
-            onChange={e => setFormData({...formData, line: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Vessel</label>
-          <input
-            type="text"
-            value={formData.vessel || ''}
-            onChange={e => setFormData({...formData, vessel: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Renter Company</label>
-          <input
-            type="text"
-            value={formData.renter_company || ''}
-            onChange={e => setFormData({...formData, renter_company: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Loaded Product</label>
-          <input
-            type="text"
-            value={formData.loaded_product || ''}
-            onChange={e => setFormData({...formData, loaded_product: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">BL Number</label>
-          <input
-            type="text"
-            value={formData.bl_number || ''}
-            onChange={e => setFormData({...formData, bl_number: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Free Time (Days)</label>
-          <input
-            type="number"
-            value={formData.free_time_days || ''}
-            onChange={e => setFormData({...formData, free_time_days: parseInt(e.target.value)})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-          {editingItem ? 'Update' : 'Create'} Job
-        </button>
-        <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-
-  // In app/admin/tanks/page.tsx
-
-  const renderEventForm = () => (
-    <div className="space-y-4 bg-white p-6 rounded-lg shadow-md">
-      <h3 className="text-xl font-bold mb-4">{editingItem ? 'Edit Event' : 'Add New Event'}</h3>
+      // Find the tank numbers for the selected IDs
+      const selectedTanks = tanks.filter(t => selectedIds.includes(t.tank_id));
+      const names = selectedTanks.map(t => t.tank_number);
       
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Tank</label>
-          <select
-            value={formData.tank_id || ''}
-            onChange={e => setFormData({...formData, tank_id: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
+      if (names.length <= 2) return names.join(", ");
+      return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
+    };
+
+    return (
+      <div className="space-y-4 bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold mb-4">{editingItem ? 'Edit Shipment' : 'Create New Shipment'}</h3>
+        
+        {/* Custom Multi-Select Dropdown */}
+        <div className="relative">
+          <label className="block text-sm font-medium mb-1">Assigned Tanks</label>
+          
+          {/* Dropdown Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setIsTankDropdownOpen(!isTankDropdownOpen)}
+            className="w-full flex justify-between items-center px-3 py-2 border rounded-md bg-white hover:border-blue-500 transition-colors text-left"
           >
-            <option value="">Select Tank</option>
-            {tanks.map(tank => (
-              <option key={tank.tank_id} value={tank.tank_id}>{tank.tank_number}</option>
-            ))}
-          </select>
+            <span className={formData.tank_ids?.length ? "text-gray-900" : "text-gray-400"}>
+              {getSelectedTanksText()}
+            </span>
+            <ChevronDown className="w-4 h-4 text-gray-500" />
+          </button>
+
+          {/* Dropdown Menu (Absolute Positioned) */}
+          {isTankDropdownOpen && (
+            <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {tanks.length > 0 ? (
+                tanks.map(tank => {
+                  const isSelected = (formData.tank_ids || []).includes(tank.tank_id);
+                  return (
+                    <div
+                      key={tank.tank_id}
+                      onClick={() => toggleTank(tank.tank_id)}
+                      className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-blue-50 ${isSelected ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
+                    >
+                      <span className="font-medium">{tank.tank_number}</span>
+                      {isSelected && <Check className="w-4 h-4 text-blue-600" />}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="px-3 py-2 text-gray-500 text-sm">No tanks available</div>
+              )}
+            </div>
+          )}
+          <p className="text-xs text-gray-500 mt-1">
+            {(formData.tank_ids || []).length} tanks selected
+          </p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Job</label>
-          <select
-            value={formData.job_id || ''}
-            onChange={e => setFormData({...formData, job_id: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          >
-            <option value="">Select Job (Optional)</option>
-            {jobs.map(job => (
-              <option key={job.job_id} value={job.job_id}>
-                {job.pol} → {job.pod} ({job.vessel})
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Port of Loading (POL)</label>
+            <input
+              type="text"
+              value={formData.pol || ''}
+              onChange={e => setFormData({...formData, pol: e.target.value})}
+              className="w-full px-3 py-2 border rounded-md"
+            />
+          </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Event Type</label>
-          <select
-            value={formData.event_type || ''}
-            onChange={e => setFormData({...formData, event_type: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          >
-            <option value="">Select Type</option>
-            {/* Updated options to match your database ENUM values */}
-            <option value="LOADING_DATE">Loading Date</option>
-            <option value="ETD">ETD (Est. Departure)</option>
-            <option value="ETA">ETA (Est. Arrival)</option>
-            <option value="ATA">ATA (Actual Arrival)</option>
-            <option value="GATE_OUT">Gate Out</option>
-            <option value="EMPTY_DATE">Empty Date</option>
-            <option value="STORAGE_DATE">Storage Date</option>
-            <option value="STATUS_UPDATE">Status Update</option>
-            <option value="NOTE">Note</option>
-          </select>
+          <div>
+            <label className="block text-sm font-medium mb-1">Port of Discharge (POD)</label>
+            <input
+              type="text"
+              value={formData.pod || ''}
+              onChange={e => setFormData({...formData, pod: e.target.value})}
+              className="w-full px-3 py-2 border rounded-md"
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Event Time</label>
-          <input
-            type="datetime-local"
-            value={formData.event_time || ''}
-            onChange={e => setFormData({...formData, event_time: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Vessel</label>
+            <input
+              type="text"
+              value={formData.vessel || ''}
+              onChange={e => setFormData({...formData, vessel: e.target.value})}
+              className="w-full px-3 py-2 border rounded-md"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">BL Number</label>
+            <input
+              type="text"
+              value={formData.bl_number || ''}
+              onChange={e => setFormData({...formData, bl_number: e.target.value})}
+              className="w-full px-3 py-2 border rounded-md"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            {editingItem ? 'Update' : 'Create'} Shipment
+          </button>
+          <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">
+            Cancel
+          </button>
         </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Location Name</label>
-          <input
-            type="text"
-            value={formData.location || ''}
-            onChange={e => setFormData({...formData, location: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Location (from database)</label>
-          <select
-            value={formData.location_id || ''}
-            onChange={e => setFormData({...formData, location_id: e.target.value})}
-            className="w-full px-3 py-2 border rounded-md"
-          >
-            <option value="">Select Location (Optional)</option>
-            {locations.map(loc => (
-              <option key={loc.location_id} value={loc.location_id}>{loc.canonical_name}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Status Text</label>
-        <input
-          type="text"
-          value={formData.status_text || ''}
-          onChange={e => setFormData({...formData, status_text: e.target.value})}
-          className="w-full px-3 py-2 border rounded-md"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Note</label>
-        <textarea
-          value={formData.note || ''}
-          onChange={e => setFormData({...formData, note: e.target.value})}
-          className="w-full px-3 py-2 border rounded-md"
-          rows="2"
-        />
-      </div>
-
-      <div className="flex gap-2">
-        <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-          {editingItem ? 'Update' : 'Create'} Event
-        </button>
-        <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   // ... inside AdminPanel function
 

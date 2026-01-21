@@ -22,7 +22,8 @@ export default function TankMap({ tanks }: { tanks: any[] }) {
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {tanks.map((t) => (
+      {tanks.filter(t => t.lat && t.lon)
+      .map((t) => (
         <Marker key={t.tank_id} position={[t.lat, t.lon]}>
           <Popup>
             <div style={{ minWidth: 240 }}>
