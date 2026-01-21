@@ -174,7 +174,7 @@ export default function AdminPanel() {
           value={formData.notes || ''}
           onChange={e => setFormData({...formData, notes: e.target.value})}
           className="w-full px-3 py-2 border rounded-md"
-          rows="3"
+          rows={3}
         />
       </div>
 
@@ -426,7 +426,7 @@ export default function AdminPanel() {
           value={formData.note || ''}
           onChange={e => setFormData({...formData, note: e.target.value})}
           className="w-full px-3 py-2 border rounded-md"
-          rows="2"
+          rows={2}
         />
       </div>
 
