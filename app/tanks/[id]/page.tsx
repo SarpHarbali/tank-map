@@ -1,14 +1,16 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link'; // Ensure Link is imported if you use it, or use the <a> tag as before
 
 export default function TankDetailPage() {
   const params = useParams();
   const tankId = params.id as string;
   
-  const [tank, setTank] = useState(null);
-  const [job, setJob] = useState(null);
-  const [history, setHistory] = useState([]);
+  // FIX: Added <any> and <any[]> types to state definitions
+  const [tank, setTank] = useState<any>(null);
+  const [job, setJob] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,23 +91,23 @@ export default function TankDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-600">Port of Loading</p>
-                <p className="font-medium text-gray-900">{tank.pol}</p>
+                <p className="font-medium text-gray-900">{job.pol}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Port of Discharge</p>
-                <p className="font-medium text-gray-900">{tank.pod}</p>
+                <p className="font-medium text-gray-900">{job.pod}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Renter Company</p>
-                <p className="font-medium text-gray-900">{tank.renter_company || 'N/A'}</p>
+                <p className="font-medium text-gray-900">{job.renter_company || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Loaded Product</p>
-                <p className="font-medium text-gray-900">{tank.loaded_product || 'N/A'}</p>
+                <p className="font-medium text-gray-900">{job.loaded_product || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">ETA</p>
-                <p className="font-medium text-gray-900">{tank.eta || 'N/A'}</p>
+                <p className="font-medium text-gray-900">{job.eta || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Status</p>

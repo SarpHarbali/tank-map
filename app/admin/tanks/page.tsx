@@ -4,10 +4,10 @@ import { Plus, Edit2, Trash2, MapPin, Package, Calendar, Map, Search, ChevronDow
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('tanks');
-  const [tanks, setTanks] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [locations, setLocations] = useState([]);
+  const [tanks, setTanks] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -455,16 +455,15 @@ export default function AdminPanel() {
       return;
     }
 
-    // specific query prioritizes the name + country for better accuracy
     const query = `${queryName}${queryCountry ? ',' + queryCountry : ''}`;
     
     try {
-      // Use OpenStreetMap's free Nominatim API
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
       const data = await res.json();
 
       if (data && data.length > 0) {
-        setFormData(prev => ({
+        // FIX: Added '(prev: any)' type annotation here
+        setFormData((prev: any) => ({
           ...prev,
           lat: parseFloat(data[0].lat),
           lon: parseFloat(data[0].lon)
@@ -479,9 +478,9 @@ export default function AdminPanel() {
   };
 
   const renderLocationForm = () => {
-    // Helper to generate a small map preview URL
-    const getMapPreviewUrl = (lat, lon) => {
-      const delta = 0.5; // Zoom level (smaller = zoomed in)
+    // FIX: Added ': number' types to lat and lon
+    const getMapPreviewUrl = (lat: number, lon: number) => {
+      const delta = 0.5; // Zoom level
       return `https://www.openstreetmap.org/export/embed.html?bbox=${lon - delta},${lat - delta},${lon + delta},${lat + delta}&layer=mapnik&marker=${lat},${lon}`;
     };
 
@@ -490,7 +489,7 @@ export default function AdminPanel() {
         <h3 className="text-xl font-bold mb-4">{editingItem ? 'Edit Location' : 'Add New Location'}</h3>
         
         <div>
-          <label className="block text-sm font-medium mb-1"> Name</label>
+          <label className="block text-sm font-medium mb-1">Canonical Name</label>
           <input
             type="text"
             value={formData.canonical_name || ''}
@@ -519,7 +518,7 @@ export default function AdminPanel() {
             <label className="block text-sm font-medium mb-1">Country Code</label>
             <input
               type="text"
-              maxLength="2"
+              maxLength={2} // Changed from string "2" to number {2} for stricter types
               value={formData.country_code || ''}
               onChange={e => setFormData({...formData, country_code: e.target.value.toUpperCase()})}
               className="w-full px-3 py-2 border rounded-md"
@@ -544,7 +543,7 @@ export default function AdminPanel() {
             <label className="block text-sm font-medium mb-1">Latitude</label>
             <input
               type="number"
-              step="0.000001"
+              step={0.000001} // Changed to number
               value={formData.lat || ''}
               onChange={e => setFormData({...formData, lat: parseFloat(e.target.value)})}
               className="w-full px-3 py-2 border rounded-md"
@@ -556,7 +555,7 @@ export default function AdminPanel() {
             <label className="block text-sm font-medium mb-1">Longitude</label>
             <input
               type="number"
-              step="0.000001"
+              step={0.000001} // Changed to number
               value={formData.lon || ''}
               onChange={e => setFormData({...formData, lon: parseFloat(e.target.value)})}
               className="w-full px-3 py-2 border rounded-md"
@@ -573,17 +572,17 @@ export default function AdminPanel() {
             </div>
             <iframe
               width="100%"
-              height="200"
+              height={200} // Changed to number
               frameBorder="0"
               scrolling="no"
-              marginHeight="0"
-              marginWidth="0"
+              marginHeight={0} // Changed to number
+              marginWidth={0}  // Changed to number
               src={getMapPreviewUrl(formData.lat, formData.lon)}
               className="block"
             ></iframe>
             <div className="bg-gray-50 px-3 py-1 text-xs text-gray-500 text-right">
               <a 
-                href={`https://www.openstreetmap.org/?mlat=${formData.lat}&mlon=${formData.lon}#map=15/${formData.lat}/${formData.lon}`} 
+                href={`https://www.openstreetmap.org/?mlat=${formData.lat}&mlon=${formData.lon}#map=11/${formData.lat}/${formData.lon}`} 
                 target="_blank" 
                 className="hover:underline text-blue-600"
               >
