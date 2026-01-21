@@ -11,7 +11,7 @@ export default function AdminPanel() {
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState<any>({});
   const [isTankDropdownOpen, setIsTankDropdownOpen] = useState(false);
 
   useEffect(() => {
